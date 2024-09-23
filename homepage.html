@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysApp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            max-width: 600px; /* Set a consistent width for all fields */
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box; /* Ensure padding is included in the width */
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .licenses {
+            text-align: right;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SysApp</h1>
+
+    <div class="container">
+        <!-- Available Licenses -->
+        <div class="licenses">
+            Available Licenses: <span id="licenseCount">Loading...</span>
+        </div>
+
+        <!-- Name Field -->
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" placeholder="Enter employee's name" />
+        </div>
+
+        <!-- Manager Field -->
+        <div class="form-group">
+            <label for="manager">Manager</label>
+            <input type="text" id="manager" placeholder="Enter manager's name" />
+        </div>
+
+        <!-- State Field -->
+        <div class="form-group">
+            <label for="state">State</label>
+            <select id="state">
+                <option value="">Select a state</option>
+                <option value="NSW">New South Wales</option>
+                <option value="VIC">Victoria</option>
+                <option value="QLD">Queensland</option>
+                <option value="SA">South Australia</option>
+                <option value="WA">Western Australia</option>
+                <option value="TAS">Tasmania</option>
+                <option value="ACT">Australian Capital Territory</option>
+                <option value="NT">Northern Territory</option>
+            </select>
+        </div>
+
+        <!-- Department Field -->
+        <div class="form-group">
+            <label for="department">Department</label>
+            <select id="department">
+                <option value="">Select a department</option>
+                <option value="Helpdesk">Helpdesk</option>
+                <option value="Field">Field</option>
+                <option value="Warehouse">Warehouse</option>
+                <option value="Office">Office</option>
+            </select>
+        </div>
+
+        <!-- Start Date Field -->
+        <div class="form-group">
+            <label for="startdate">Start Date</label>
+            <input type="date" id="startdate" />
+        </div>
+
+        <!-- Submit Button -->
+        <button onclick="submitForm()">Submit</button>
+
+        <!-- Result/Response -->
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Fetch the available licenses from an API endpoint
+        function fetchLicenses() {
+            fetch('http://127.0.0.1:8000/licenses')  // Replace with actual API endpoint
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('licenseCount').innerText = data.availableLicenses || 0;
+                })
+                .catch(error => {
+                    console.error('Error fetching licenses:', error);
+                    document.getElementById('licenseCount').innerText = 'Error';
+                });
+        }
+
+        // Call the API when the Submit button is clicked
+        function submitForm() {
+            const name = document.getElementById('name').value;
+            const manager = document.getElementById('manager').value;
+            const state = document.getElementById('state').value;
+            const department = document.getElementById('department').value;
+            const startDate = document.getElementById('startdate').value;
+
+            if (!name || !manager || !state || !department || !startDate) {
+                document.getElementById('result').innerText = 'Please fill out all fields.';
+                return;
+            }
+
+            const userData = {
+                name,
+                manager,
+                state,
+                department,
+                startDate
+            };
+            console.log(userData);
+            // Replace with actual API endpoint
+            fetch('http://127.0.0.1:8000/create-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = 'User created successfully!';
+            })
+            .catch(error => {
+                console.error('Error creating user:', error);
+                document.getElementById('result').innerText = 'Error creating user.';
+            });
+        }
+
+        // Fetch the available licenses on page load
+        fetchLicenses();
+    </script>
+</body>
+</html>
