@@ -154,51 +154,78 @@
 
         // Call the API when the Submit button is clicked
         function submitForm() {
-            const name = document.getElementById('name').value;
-            const manager = document.getElementById('manager').value;
-            const state = document.getElementById('state').value;
-            const department = document.getElementById('department').value;
-            const startDate = document.getElementById('startdate').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+    const name = document.getElementById('name').value;
+    const manager = document.getElementById('manager').value;
+    const state = document.getElementById('state').value;
+    const department = document.getElementById('department').value;
+    const startDate = document.getElementById('startdate').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-            if (!name || !manager || !state || !department || !startDate || !username || !password) {
-                document.getElementById('result').innerText = 'Please fill out all fields.';
-                return;
-            }
+    if (!name || !manager || !state || !department || !startDate || !username || !password) {
+        document.getElementById('result').innerText = 'Please fill out all fields.';
+        return;
+    }
 
-            const userData = {
-                name,
-                manager,
-                state,
-                department,
-                startDate,
-                username,
-                password
-            };
+    const userData = {
+        name,
+        manager,
+        state,
+        department,
+        // startDate is commented out; make sure this is intentional.
+    };
 
-            const signBytes = CryptoJS.enc.Hex.stringify(CryptoJS.HmacSHA512(JSON.stringify(userData), ''));
-            console.log(userData);
+    const signBytes = CryptoJS.enc.Hex.stringify(CryptoJS.HmacSHA512(JSON.stringify(userData), password));
 
-            // Replace with actual API endpoint
-            fetch('http://127.0.0.1:8000/create-user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': signBytes,
-                },
-                body: JSON.stringify(userData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('result').innerText = 'User created successfully!';
-            })
-            .catch(error => {
-                console.error('Error creating user:', error);
-                document.getElementById('result').innerText = 'Error creating user.';
+    fetch('http://10.0.0.198:8000/create-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': username + ":" + signBytes,
+        },
+        body: JSON.stringify(userData),
+    })
+    .then(response => {
+        if (!response.ok) {
+            // Handle different status codes
+            return response.json().then(errorData => {
+                let errorMessage;
+                switch (response.status) {
+                    case 400:
+                        errorMessage = errorData.detail || 'Bad Request. Please check your input.';
+                        break;
+                    case 401:
+                        errorMessage = 'Unauthorized. Please check your authorization.';
+                        break;
+                    case 403:
+                        errorMessage = errorData.detail || 'Forbidden. You do not have permission.';
+                        break;
+                    case 404:
+                        errorMessage = 'Not Found. The requested resource could not be found.';
+                        break;
+                    case 500:
+                        errorMessage = 'Server Error. Please try again later.';
+                        break;
+                    default:
+                        errorMessage = 'An unknown error occurred.';
+                        break;
+                }
+                document.getElementById('result').innerText = errorMessage;
+                throw new Error(errorMessage); // Ensure this stops further execution.
             });
         }
-
+        return response.json(); // Process success response
+    })
+    .then(data => {
+        document.getElementById('result').innerText = 'User created successfully!';
+    })
+    .catch(error => {
+        console.error('Error creating user:', error);
+        if (error.message !== 'User created successfully!') {
+            document.getElementById('result').innerText = error.message || 'Error creating user.';
+        }
+    });
+}
         // Fetch the available licenses on page load
         fetchLicenses();
     </script>

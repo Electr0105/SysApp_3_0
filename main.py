@@ -22,7 +22,7 @@ class User(BaseModel):
     manager: str
     state: str
     department: str
-    # startdate: str
+    # startdate: D
 
 @app.get("/")
 async def test():
@@ -40,11 +40,14 @@ async def licenses():
 async def create_user(request: Request, user: User, authorization: Optional[str] = Header(None)):
     # Check if the Authorization header is present
 
-    print(env_file["KEYS"]["Jackson"])
+    username, client_digest = authorization.split(":")
 
-    print(user.model_dump_json())
-    client_digest = hmac.new(''.encode(), user.model_dump_json().encode(), 'sha512').hexdigest()
-    print(f"Client Digest {client_digest}")
+    try:
+        user_key = env_file["KEYS"][username]
+    except:
+        raise HTTPException(status_code=403, detail="Username not found")
+
+    server_digest = hmac.new(user_key.encode(), user.model_dump_json().encode(), 'sha512').hexdigest()
 
     # Optionally, print the full request body
     body = await request.json()  # Read the body as JSON
@@ -53,8 +56,7 @@ async def create_user(request: Request, user: User, authorization: Optional[str]
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header is missing")
 
-    # You could also check the actual value of the token here (e.g., compare to a known token)
-    if authorization != "jackson":
+    if client_digest != server_digest:
         raise HTTPException(status_code=403, detail="Unauthorized")
 
     # Process the user data (e.g., save to database, perform actions)
