@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <title>SysApp</title>
     <style>
         body {
@@ -30,12 +31,11 @@
         }
         input, select {
             width: 100%;
-            max-width: 600px; /* Set a consistent width for all fields */
             padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 4px;
+            margin-bottom: 10px;
+            border-radius: 8px;
             border: 1px solid #ccc;
-            box-sizing: border-box; /* Ensure padding is included in the width */
+            box-sizing: border-box;
         }
         button {
             width: 100%;
@@ -43,7 +43,7 @@
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 24px;
             cursor: pointer;
         }
@@ -60,15 +60,26 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
 
     <h1>SysApp</h1>
-
     <div class="container">
+        <!-- Username Field -->
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username" required>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+
         <!-- Available Licenses -->
         <div class="licenses">
             Available Licenses: <span id="licenseCount">Loading...</span>
@@ -77,21 +88,21 @@
         <!-- Name Field -->
         <div class="form-group">
             <label for="name">Name</label>
-            <input type="text" id="name" placeholder="Enter employee's name" />
+            <input type="text" id="name" value="test" placeholder="Enter employee's name" />
         </div>
 
         <!-- Manager Field -->
         <div class="form-group">
             <label for="manager">Manager</label>
-            <input type="text" id="manager" placeholder="Enter manager's name" />
+            <input type="text" id="manager" value="test" placeholder="Enter manager's name" />
         </div>
 
         <!-- State Field -->
         <div class="form-group">
             <label for="state">State</label>
             <select id="state">
-                <option value="">Select a state</option>
-                <option value="NSW">New South Wales</option>
+                <option>Select a state</option>
+                <option selected="selected" value="NSW">New South Wales</option>
                 <option value="VIC">Victoria</option>
                 <option value="QLD">Queensland</option>
                 <option value="SA">South Australia</option>
@@ -107,7 +118,7 @@
             <label for="department">Department</label>
             <select id="department">
                 <option value="">Select a department</option>
-                <option value="Helpdesk">Helpdesk</option>
+                <option selected="selected" value="Helpdesk">Helpdesk</option>
                 <option value="Field">Field</option>
                 <option value="Warehouse">Warehouse</option>
                 <option value="Office">Office</option>
@@ -117,7 +128,7 @@
         <!-- Start Date Field -->
         <div class="form-group">
             <label for="startdate">Start Date</label>
-            <input type="date" id="startdate" />
+            <input value="2000-12-12" type="date" id="startdate" />
         </div>
 
         <!-- Submit Button -->
@@ -148,8 +159,10 @@
             const state = document.getElementById('state').value;
             const department = document.getElementById('department').value;
             const startDate = document.getElementById('startdate').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-            if (!name || !manager || !state || !department || !startDate) {
+            if (!name || !manager || !state || !department || !startDate || !username || !password) {
                 document.getElementById('result').innerText = 'Please fill out all fields.';
                 return;
             }
@@ -159,14 +172,20 @@
                 manager,
                 state,
                 department,
-                startDate
+                startDate,
+                username,
+                password
             };
+
+            const signBytes = CryptoJS.enc.Hex.stringify(CryptoJS.HmacSHA512(JSON.stringify(userData), ''));
             console.log(userData);
+
             // Replace with actual API endpoint
             fetch('http://127.0.0.1:8000/create-user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': signBytes,
                 },
                 body: JSON.stringify(userData),
             })
