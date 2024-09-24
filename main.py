@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from typing import Optional
 import hmac
 import configparser
+from azure_api import get_number_of_available_licenses
+import asyncio
 
 app = FastAPI()
 env_file = configparser.ConfigParser()
@@ -28,13 +30,10 @@ class User(BaseModel):
 async def test():
     return {"welcome":"welcome"}
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int):
-    return {"item_id": item_id, "description": "This is a test item."}
-
 @app.get("/licenses")
 async def licenses():
-    return {"count":10}
+    num_of_licenses = await get_number_of_available_licenses()
+    return {"availableLicenses": num_of_licenses}
 
 @app.post("/create-user")
 async def create_user(request: Request, user: User, authorization: Optional[str] = Header(None)):
@@ -43,7 +42,7 @@ async def create_user(request: Request, user: User, authorization: Optional[str]
     username, client_digest = authorization.split(":")
 
     try:
-        user_key = env_file["KEYS"][username]
+        user_key = env_file["API KEYS"][username]
     except:
         raise HTTPException(status_code=403, detail="Username not found")
 
